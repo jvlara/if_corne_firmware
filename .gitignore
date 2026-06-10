@@ -1,0 +1,11 @@
+# Build artifacts
+*.o
+*.elf
+*.bin
+*.hex
+*.uf2
+.build/
+
+# Análisis local (no es parte del firmware)
+if_corne_explained.html
+tmp/

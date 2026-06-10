@@ -1,0 +1,22 @@
+# MCU name
+MCU = STM32F103
+BOARD = STM32_F103_STM32DUINO
+BOOTLOADER = tinyuf2
+
+MCU_STARTUP = stm32f1xx
+MCU_SERIES = STM32F103
+MCU_LDSCRIPT = STM32F103xB_uf2
+FIRMWARE_FORMAT = uf2
+
+OPT_DEFS += -DCORTEX_ENABLE_WFI_IDLE=TRUE
+OPT_DEFS += -DBOOTLOADER_TINYUF2
+
+UART_DRIVER_REQUIRED = yes
+
+CUSTOM_MATRIX = yes    # Remote matrix from the 
+
+# # project specific files
+SRC += matrix.c
+# SRC += uart.c
+VPATH += $(DRIVER_PATH)/chibios
+
