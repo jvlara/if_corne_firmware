@@ -26,6 +26,13 @@
 
 #define ONESHOT_TIMEOUT 500
 
+/* Software debounce en el receptor.
+ * Las mitades inalambricas envian el estado crudo de la matriz por UART;
+ * aqui filtramos rebotes/chatter sobre la matriz ya reensamblada.
+ * QMK aplica este valor (ms) a traves del algoritmo de debounce por defecto
+ * (sym_defer_g) solo porque matrix.c ahora llama a debounce(). */
+#define DEBOUNCE 5
+
 #define USB_POLLING_INTERVAL_MS 1
 
 #define MIDI_ADVANCED

@@ -22,6 +22,7 @@
 #include "wait.h"
 #include "util.h"
 #include "matrix.h"
+#include "debounce.h"
 #include "timer.h"
 #include "uart.h"
 
@@ -55,10 +56,12 @@
 #endif
 
 /* matrix state(1:on, 0:off) */
-static matrix_row_t matrix[MATRIX_ROWS];
+static matrix_row_t raw_matrix[MATRIX_ROWS];  // estado crudo recibido por UART
+static matrix_row_t matrix[MATRIX_ROWS];      // estado tras debounce
 
 void matrix_init_kb(void) {
     uart_init(1000000);
+    debounce_init(MATRIX_ROWS);
 }
 
 void matrix_init_quantum(void) {
@@ -92,18 +95,28 @@ uint8_t matrix_scan(void) {
 
     uart_write('s');
 
+    bool    changed = false;
     uint8_t uart_data[uart_data_lenth] = {0};
     if (sdReadTimeout(&SERIAL_DRIVER, uart_data, uart_data_lenth, TIME_MS2I(1))) {
         if (uart_data[uart_data_lenth - 1] == 0xE0) {
-            // shifting and transferring the keystates to the QMK matrix variable
+            // shifting and transferring the keystates into the raw matrix
             for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
-                matrix[i] = (matrix_row_t)uart_data[i * 2] | (matrix_row_t)uart_data[i * 2 + 1] << shifting_col;
+                matrix_row_t row = (matrix_row_t)uart_data[i * 2] | (matrix_row_t)uart_data[i * 2 + 1] << shifting_col;
+                if (raw_matrix[i] != row) {
+                    raw_matrix[i] = row;
+                    changed       = true;
+                }
             }
         }
     }
 
+    // Aplica debounce sobre la matriz cruda -> matriz "cocida" que usa QMK.
+    // Se llama en cada scan (aunque no llegue dato nuevo) para que el
+    // algoritmo basado en timer pueda asentar los cambios pendientes.
+    changed = debounce(raw_matrix, matrix, MATRIX_ROWS, changed);
+
     matrix_scan_kb();
-    return 1;
+    return (uint8_t)changed;
 }
 
 bool matrix_is_on(uint8_t row, uint8_t col) {
